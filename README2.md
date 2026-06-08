@@ -42,7 +42,7 @@ To help get this connected, let me know:
 
 ------
 
-
+# to insert new data
 
 docker exec -i mongo-backend mongo -u admin -p password --authenticationDatabase admin <<EOF
 use langdb;
@@ -53,4 +53,95 @@ db.languages.insert({"name" : "go", "codedetail" : { "usecase" : "system, web, s
 db.languages.insert({"name" : "java", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 1, "compiled" : true, "homepage" : "https://java.com", "download" : "https://java.comdownload/", "votes" : 0}});
 db.languages.insert({"name" : "nodejs", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 20, "script" : false, "homepage" : "https://nodejs.org", "download" : "https://nodejs.orgdownload/", "votes" : 0}});
 EOF
+
+
+
+-----
+
+#iBackend for kubernetes
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voteapp-backend-deployment
+  labels:
+    app: voteapp-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: voteapp-backend
+  template:
+    metadata:
+      labels:
+        app: voteapp-backend
+    spec:
+      containers:
+      - name: backend-api
+        image: yomex96/voteapp-backend:latest  # <--- Your public Docker Hub image
+        imagePullPolicy: Always                 # Forces K8s to check Docker Hub for updates
+        ports:
+        - containerPort: 8080
+        env:
+        - name: MONGO_CONN_STR
+          value: "mongodb://database:27017/langdb"
+        - name: MONGO_USERNAME
+          value: "admin"
+        - name: MONGO_PASSWORD
+          value: "password"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: NodePort
+  ports:
+  - port: 8080         # Internal cluster port
+    targetPort: 8080   # Port inside your Go container
+    nodePort: 30081    # The port you will use to test it on your Mac browser
+  selector:
+    app: voteapp-backend
+
+
+
+-------
+
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voteapp-frontend-deployment
+  labels:
+    app: voteapp-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: voteapp-frontend
+  template:
+    metadata:
+      labels:
+        app: voteapp-frontend
+    spec:
+      containers:
+      - name: frontend-app
+        image: yomex96/voteapp-frontend:latest  # <--- Your public frontend image
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80                     # The port Nginx listens to inside the container
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: NodePort
+  ports:
+  - port: 80           # Cluster internal port
+    targetPort: 80     # Container port
+    nodePort: 30080    # The port to view the website on your Mac browser
+  selector:
+    app: voteapp-frontend
 
