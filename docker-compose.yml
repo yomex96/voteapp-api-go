@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  database:
+    image: mongo:4.2
+    container_name: mongo-backend
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: langdb
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build: .
+    container_name: voteapp-api
+    ports:
+      - "8081:8080"
+    depends_on:
+      - database
+    environment:
+      - MONGO_CONN_STR=mongodb://admin:password@database:27017/langdb?authSource=admin
+      - MONGO_USERNAME=admin
+      - MONGO_PASSWORD=password
+
+volumes:
+  mongo-data:
+
