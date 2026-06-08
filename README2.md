@@ -58,7 +58,7 @@ EOF
 
 -----
 
-#iBackend for kubernetes
+#Backend for kubernetes
 
 apiVersion: apps/v1
 kind: Deployment
@@ -107,7 +107,7 @@ spec:
 
 -------
 
-
+#Frontend for kubernetes
 
 apiVersion: apps/v1
 kind: Deployment
